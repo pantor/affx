@@ -1,2 +1,3 @@
-# affx
-Affine Transformations for C++ and Python
+# Affx
+
+Affine transformations for C++ and Python.

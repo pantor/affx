@@ -1,5 +1,6 @@
 #pragma once
 
+#include <array>
 #include <random>
 
 #include <Eigen/Geometry>
@@ -8,11 +9,71 @@
 
 namespace affx {
 
-struct Affine {
-private:
+class Affine {
   using Euler = Eigen::EulerAngles<double, Eigen::EulerSystemZYX>;
+  typedef Eigen::Affine3d Type;
 
-  Eigen::Vector3d get_angles() const {
+public:
+  Type data;
+
+  explicit Affine() {
+    this->data = Type::Identity();
+  }
+
+  explicit Affine(const Type& data) {
+    this->data = data;
+  }
+
+  explicit Affine(double x, double y, double z, double a = 0.0, double b = 0.0, double c = 0.0) {
+    data.translation() = Eigen::Vector3d(x, y, z);
+    data.linear() = Euler(a, b, c).toRotationMatrix();
+  }
+
+  explicit Affine(double x, double y, double z, double q_w, double q_x, double q_y, double q_z) {
+    data.translation() = Eigen::Vector3d(x, y, z);
+    data.linear() = Eigen::Quaterniond(q_w, q_x, q_y, q_z).toRotationMatrix();
+  }
+
+  explicit Affine(const std::array<double, 6>& v): Affine(v[0], v[1], v[2], v[3], v[4], v[5]) { }
+
+  explicit Affine(const std::array<double, 7>& v): Affine(v[0], v[1], v[2], v[3], v[4], v[5]) { }
+
+  explicit Affine(const std::array<double, 16>& array) {
+    Type affine(Eigen::Matrix4d::Map(array.data()));
+    data = affine;
+  }
+
+  Affine operator *(const Affine &a) const {
+    Type result;
+    result = data * a.data;
+    return Affine(result);
+  }
+
+  Affine inverse() const {
+    return Affine(data.inverse());
+  }
+
+  bool isApprox(const Affine &a) const {
+    return data.isApprox(a.data);
+  }
+
+  Eigen::Ref<Affine::Type::MatrixType> matrix() {
+    return data.matrix();
+  }
+
+  std::array<double, 16> array() const {
+    std::array<double, 16> array;
+    std::copy(data.data(), data.data() + array.size(), array.begin());
+    return array;
+  }
+
+  Eigen::Vector3d translation() const {
+    Eigen::Vector3d v;
+    v << data.translation();
+    return v;
+  }
+
+  Eigen::Vector3d angles() const {
     Eigen::Vector3d angles = Euler::FromRotation<false, false, false>(data.rotation()).angles();
     Eigen::Vector3d angles_equal;
     angles_equal << angles[0] - M_PI, M_PI - angles[1], angles[2] - M_PI;
@@ -30,122 +91,10 @@ private:
     return angles_equal;
   }
 
-
-public:
-  Eigen::Isometry3d data;
-
-  Affine() {
-    this->data = Eigen::Isometry3d::Identity();
-  }
-
-  Affine(const Eigen::Isometry3d& data) {
-    this->data = data;
-  }
-
-  Affine(double x, double y, double z, double a, double b, double c) {
-    data.translation() = Eigen::Vector3d(x, y, z);
-    data.linear() = Euler(a, b, c).toRotationMatrix();
-  }
-
-  Affine(double x, double y, double z, double q_w, double q_x, double q_y, double q_z) {
-    data.translation() = Eigen::Vector3d(x, y, z);
-    data.linear() = Eigen::Quaterniond(q_w, q_x, q_y, q_z).toRotationMatrix();
-  }
-
-  Affine operator *(const Affine &a) const {
-    Eigen::Isometry3d result;
-    result = data * a.data;
-    return Affine(result);
-  }
-
-  Affine inverse() const {
-    return Affine(data.inverse());
-  }
-
-  bool isApprox(const Affine &a) const {
-    return data.isApprox(a.data);
-  }
-
-  void translate(const Eigen::Vector3d &v) {
-    data.translate(v);
-  }
-
-  void pretranslate(const Eigen::Vector3d &v) {
-    data.pretranslate(v);
-  }
-
-  Eigen::Vector3d translation() const {
-    Eigen::Vector3d v;
-    v << data.translation();
-    return v;
-  }
-
-  double x() const {
-    return data.translation().x();
-  }
-
-  void setX(double x) {
-    data.translation().x() = x;
-  }
-
-  double y() const {
-    return data.translation().y();
-  }
-
-  void setY(double y) {
-    data.translation().y() = y;
-  }
-
-  double z() const {
-    return data.translation().z();
-  }
-
-  void setZ(double z) {
-    data.translation().z() = z;
-  }
-
-  void rotate(const Eigen::Isometry3d::LinearMatrixType &r) {
-    data.rotate(r);
-  }
-
-  void prerotate(const Eigen::Isometry3d::LinearMatrixType &r) {
-    data.prerotate(r);
-  }
-
-  Eigen::Isometry3d::LinearMatrixType rotation() const {
-    Eigen::Isometry3d::LinearMatrixType result;
+  Type::LinearMatrixType rotation() const {
+    Type::LinearMatrixType result;
     result << data.rotation();
     return result;
-  }
-
-  double a() const {
-    return get_angles()(0);
-  }
-
-  double b() const {
-    return get_angles()(1);
-  }
-
-  double c() const {
-    return get_angles()(2);
-  }
-
-  void setA(double a) {
-    Eigen::Matrix<double, 3, 1> angles;
-    angles << get_angles();
-    data.linear() = Euler(a, angles(1), angles(2)).toRotationMatrix();
-  }
-
-  void setB(double b) {
-    Eigen::Matrix<double, 3, 1> angles;
-    angles << get_angles();
-    data.linear() = Euler(angles(0), b, angles(2)).toRotationMatrix();
-  }
-
-  void setC(double c) {
-    Eigen::Matrix<double, 3, 1> angles;
-    angles << get_angles();
-    data.linear() = Euler(angles(0), angles(1), c).toRotationMatrix();
   }
 
   Eigen::Quaterniond quaternion() const {
@@ -158,8 +107,28 @@ public:
     return {q.x(), q.y(), q.z(), q.w()};
   }
 
-  void setQuaternion(double w, double x, double y, double z) {
-    data.linear() = Eigen::Quaterniond(w, x, y, z).toRotationMatrix();
+  double x() const {
+    return data.translation().x();
+  }
+  
+  double y() const {
+    return data.translation().y();
+  }
+
+  double z() const {
+    return data.translation().z();
+  }
+
+  double a() const {
+    return angles()(0);
+  }
+
+  double b() const {
+    return angles()(1);
+  }
+
+  double c() const {
+    return angles()(2);
   }
 
   double qW() const {
@@ -178,12 +147,68 @@ public:
     return quaternion().z();
   }
 
+  void translate(const Eigen::Vector3d &v) {
+    data.translate(v);
+  }
+
+  void pretranslate(const Eigen::Vector3d &v) {
+    data.pretranslate(v);
+  }
+
+  void rotate(const Type::LinearMatrixType &r) {
+    data.rotate(r);
+  }
+
+  void prerotate(const Type::LinearMatrixType &r) {
+    data.prerotate(r);
+  }
+
+  void setQuaternion(double w, double x, double y, double z) {
+    data.linear() = Eigen::Quaterniond(w, x, y, z).toRotationMatrix();
+  }
+
+  void setX(double x) {
+    data.translation().x() = x;
+  }
+
+  void setY(double y) {
+    data.translation().y() = y;
+  }
+
+  void setZ(double z) {
+    data.translation().z() = z;
+  }
+
+  void setA(double a) {
+    Eigen::Vector3d euler = angles();
+    data.linear() = Euler(a, euler(1), euler(2)).toRotationMatrix();
+  }
+
+  void setB(double b) {
+    Eigen::Vector3d euler = angles();
+    data.linear() = Euler(euler(0), b, euler(2)).toRotationMatrix();
+  }
+
+  void setC(double c) {
+    Eigen::Vector3d euler = angles();
+    data.linear() = Euler(euler(0), euler(1), c).toRotationMatrix();
+  }
+  
+  Affine slerp(const Affine& affine, double t) const {
+    Type result;
+    Eigen::Quaterniond q_start(data.rotation());
+    Eigen::Quaterniond q_end(affine.rotation());
+    result.translation() = data.translation() + t * (affine.translation() - data.translation());
+    result.linear() = q_start.slerp(t, q_end).toRotationMatrix();
+    return Affine(result);
+  }
+
   Affine getInnerRandom() const {
     std::random_device r;
     std::default_random_engine engine(r());
 
     Eigen::Matrix<double, 6, 1> max, random;
-    max << data.translation(), get_angles();
+    max << data.translation(), angles();
 
     for (int i = 0; i < 6; i++) {
       std::uniform_real_distribution<double> distribution(-max(i), max(i));
@@ -195,7 +220,7 @@ public:
 
   std::string toString() const {
     Eigen::Matrix<double, 6, 1> v;
-    v << data.translation(), get_angles();
+    v << data.translation(), angles();
 
     return "[" + std::to_string(v(0)) + ", " + std::to_string(v(1)) + ", " + std::to_string(v(2))
       + ", " + std::to_string(v(3)) + ", " + std::to_string(v(4)) + ", " + std::to_string(v(5)) + "]";

@@ -10,6 +10,9 @@
 namespace affx {
 
 class Affine {
+  using Vector6d = Eigen::Matrix<double, 6, 1>;
+  using Vector7d = Eigen::Matrix<double, 7, 1>;
+
   using Euler = Eigen::EulerAngles<double, Eigen::EulerSystemZYX>;
   typedef Eigen::Affine3d Type;
 
@@ -38,6 +41,10 @@ public:
 
   explicit Affine(const std::array<double, 7>& v): Affine(v[0], v[1], v[2], v[3], v[4], v[5]) { }
 
+  explicit Affine(const Vector6d& v): Affine(v[0], v[1], v[2], v[3], v[4], v[5]) { }
+
+  explicit Affine(const Vector7d& v): Affine(v[0], v[1], v[2], v[3], v[4], v[5]) { }
+
   explicit Affine(const std::array<double, 16>& array) {
     Type affine(Eigen::Matrix4d::Map(array.data()));
     data = affine;
@@ -65,6 +72,18 @@ public:
     std::array<double, 16> array;
     std::copy(data.data(), data.data() + array.size(), array.begin());
     return array;
+  }
+
+  Vector6d vector() const {
+    Vector6d result;
+    result << data.translation(), angles();
+    return result;
+  }
+
+  Vector7d vector_with_elbow(double elbow) const {
+    Vector7d result;
+    result << data.translation(), angles(), elbow;
+    return result;
   }
 
   Eigen::Vector3d translation() const {
@@ -110,7 +129,7 @@ public:
   double x() const {
     return data.translation().x();
   }
-  
+
   double y() const {
     return data.translation().y();
   }
@@ -193,7 +212,7 @@ public:
     Eigen::Vector3d euler = angles();
     data.linear() = Euler(euler(0), euler(1), c).toRotationMatrix();
   }
-  
+
   Affine slerp(const Affine& affine, double t) const {
     Type result;
     Eigen::Quaterniond q_start(data.rotation());

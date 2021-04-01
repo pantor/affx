@@ -29,6 +29,7 @@ PYBIND11_MODULE(pyaffx, m) {
     .def("translate", &Affine::translate)
     .def("pretranslate", &Affine::pretranslate)
     .def("translation", &Affine::translation)
+    .def("vector", &Affine::vector)
     .def("rotate", &Affine::rotate)
     .def("prerotate", &Affine::prerotate)
     .def("rotation", &Affine::rotation)

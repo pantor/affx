@@ -11,5 +11,4 @@ target_include_directories(affx PUBLIC include ${EIGEN3_INCLUDE_DIR})
 
 
 pybind11_add_module(pyaffx src/python.cpp)
-# target_include_directories(pyaffx PUBLIC include ${EIGEN3_INCLUDE_DIR})
 target_link_libraries(pyaffx PUBLIC affx)

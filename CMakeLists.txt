@@ -13,7 +13,9 @@ target_include_directories(affx PUBLIC include ${EIGEN3_INCLUDE_DIR})
 
 
 if(BUILD_PYTHON)
-    find_package(pybind11 2.6 REQUIRED)
+    if (NOT pybind11_FOUND)
+        find_package(pybind11 2.6 REQUIRED)
+    endif()
 
     pybind11_add_module(pyaffx src/python.cpp)
     target_link_libraries(pyaffx PUBLIC affx)

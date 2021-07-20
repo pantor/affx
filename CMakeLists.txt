@@ -15,7 +15,7 @@ target_link_libraries(affx PUBLIC Eigen3::Eigen)
 
 
 if(BUILD_PYTHON)
-    find_package(pybind11 2.6 REQUIRED)
+    find_package(pybind11 REQUIRED)
 
     pybind11_add_module(pyaffx src/python.cpp)
     target_link_libraries(pyaffx PUBLIC affx)

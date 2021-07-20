@@ -5,20 +5,12 @@ project(affx)
 option(BUILD_PYTHON "Build python module" ON)
 
 
-find_package(Eigen3 QUIET)
+find_package(Eigen3 REQUIRED)
 
 
 add_library(affx src/affine.cpp)
 target_include_directories(affx PUBLIC include)
-
-
-if(NOT Eigen3_FOUND)
-    FetchContent_Declare(eigen GIT_REPOSITORY https://gitlab.com/libeigen/eigen.git GIT_TAG 3.3.9)
-    FetchContent_MakeAvailable(eigen)
-    target_link_libraries(affx PUBLIC eigen)
-else()
-    target_include_directories(affx PUBLIC ${EIGEN3_INCLUDE_DIRS})
-endif()
+target_link_libraries(affx PUBLIC Eigen3::Eigen)
 
 
 if(BUILD_PYTHON)

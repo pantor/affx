@@ -123,7 +123,7 @@ public:
 
   std::array<double, 4> py_quaternion() const {
     auto q = quaternion();
-    return {q.x(), q.y(), q.z(), q.w()};
+    return {q.w(), q.x(), q.y(), q.z()};
   }
 
   double x() const {

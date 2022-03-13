@@ -13,6 +13,7 @@ add_library(affx src/affine.cpp)
 target_compile_features(affx PUBLIC cxx_std_17)
 target_include_directories(affx PUBLIC include)
 target_link_libraries(affx PUBLIC Eigen3::Eigen)
+add_library(affx::affx ALIAS affx)
 
 
 if(BUILD_PYTHON)

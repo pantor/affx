@@ -17,11 +17,13 @@ add_library(affx::affx ALIAS affx)
 
 
 if(BUILD_PYTHON)
-    if(USE_INTERNAL_PYBIND11)
-        FetchContent_Declare(pybind11_fetch GIT_REPOSITORY https://github.com/pybind/pybind11.git GIT_TAG v2.6.2)
-        FetchContent_MakeAvailable(pybind11_fetch)
-    else()
-        find_package(pybind11 REQUIRED)
+    if(NOT pybind11_FOUND)
+        if(USE_INTERNAL_PYBIND11)
+            FetchContent_Declare(pybind11_fetch GIT_REPOSITORY https://github.com/pybind/pybind11.git GIT_TAG v2.6.2)
+            FetchContent_MakeAvailable(pybind11_fetch)
+        else()
+            find_package(pybind11 REQUIRED)
+        endif()
     endif()
 
     pybind11_add_module(pyaffx src/python.cpp)

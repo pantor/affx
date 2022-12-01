@@ -50,6 +50,32 @@ public:
     data = affine;
   }
 
+  static Affine fromPosRotVec(double p_x, double p_y, double p_z, double r_x, double r_y, double r_z) {
+      auto output = Affine();
+      output.data.translation() = Eigen::Vector3d(p_x, p_y, p_z);
+      auto rot_vec = Eigen::Vector3d(r_x, r_y, r_z);
+      auto axis = rot_vec.normalized();
+      auto angle = rot_vec.norm();
+      output.data.linear() = Eigen::AngleAxis(angle, axis).toRotationMatrix();
+      return output;
+  }
+
+  static Affine fromPosRotVec(const std::array<double, 6> &v) {
+      return fromPosRotVec(v[0], v[1], v[2], v[3], v[4], v[5]);
+  }
+
+  static Affine fromPosRotVec(const std::array<double, 7> &v) {
+      return fromPosRotVec(v[0], v[1], v[2], v[3], v[4], v[5]);
+  }
+
+  static Affine fromPosRotVec(const Vector6d &v) {
+      return fromPosRotVec(v[0], v[1], v[2], v[3], v[4], v[5]);
+  }
+
+  static Affine fromPosRotVec(const Vector7d &v) {
+      return fromPosRotVec(v[0], v[1], v[2], v[3], v[4], v[5]);
+  }
+
   Affine operator *(const Affine &a) const {
     Type result;
     result = data * a.data;
@@ -80,9 +106,14 @@ public:
     return result;
   }
 
+  Eigen::Vector3d rotation_vector() const {
+      Eigen::AngleAxis<double> result(data.rotation());
+      return result.axis() * result.angle();
+  }
+
   Vector7d vector_with_elbow(double elbow) const {
     Vector7d result;
-    result << data.translation(), angles(), elbow;
+    result << data.translation(), rotation_vector(), elbow;
     return result;
   }
 
